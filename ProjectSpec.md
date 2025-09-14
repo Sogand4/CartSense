@@ -1,28 +1,26 @@
-# Project_Spec_Template.md  
-2025-09-13  
-
----
-
-## Project Spec Template (Design-Only)
-
-Use this template to define your prediction/design project. Keep it concise (2–3 pages max) and link to supporting artifacts where appropriate.
-
----
-
 ### 1) User & Decision
-Who will use this? What decision does your prediction/design inform?
 
----
+User: E-commerce operations/merchandising team
+
+Decision: Flag products/orders with high return risk → improve sizing guides, adjust descriptions, or prepare logistics
 
 ### 2) Target & Horizon
-Target (binary/numeric/ETA) and when it’s defined (e.g., next 5 minutes, this session, by deadline).
 
----
+Target: P(return within 30 days) (binary: return / no return)
+
+Horizon: 30 days post-purchase
 
 ### 3) Features (No Leakage)
-Only information available at prediction time. Note what you exclude to avoid leakage.
 
----
+Product features: category (clothing, electronics, etc.), brand, size variant, price point
+
+Order context: first-time buyer flag, bulk order indicator, applied discount code
+
+Historical aggregates: return rate for this product in past 90 dayss, return rate for category overall
+
+Time features: season (holiday vs off-season), day of week of purchase
+
+Exclude (no leakage): actual return request status, customer identifiers (PII), shipping info updates after purchase
 
 ### 4) Baseline → Model Plan
 Baseline you can implement immediately (rule/heuristic).  
