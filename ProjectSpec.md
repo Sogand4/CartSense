@@ -1,38 +1,46 @@
+## Cart Abandonment Predictor
+
 ### 1) User & Decision
 
-User: E-commerce operations/merchandising team
+User: E-commerce marketing/retention team.
 
-Decision: Flag products/orders with high return risk → improve sizing guides, adjust descriptions, or prepare logistics
+Decision: Trigger a retention strategy (send reminder email, pop-up discount, etc.).
 
 ### 2) Target & Horizon
 
-Target: P(return within 30 days) (binary: return / no return)
+Target: Will this cart be purchased (1) or abandoned (0)?
 
-Horizon: 30 days post-purchase
+Horizon: Next 24 hours after last cart activity.
 
 ### 3) Features (No Leakage)
 
-Product features: category (clothing, electronics, etc.), brand, size variant, price point
+Cart value (total $).
 
-Order context: first-time buyer flag, bulk order indicator, applied discount code
+Number of items.
 
-Historical aggregates: return rate for this product in past 90 dayss, return rate for category overall
+Time since last activity.
 
-Time features: season (holiday vs off-season), day of week of purchase
+Device type (mobile/desktop).
 
-Exclude (no leakage): actual return request status, customer identifiers (PII), shipping info updates after purchase
+Referral source (direct / ad / search).
+
+Exclusions: payment status (leaks future), any info after checkout event.
 
 ### 4) Baseline → Model Plan
 Baseline you can implement immediately (rule/heuristic).  
 One simple model (e.g., logistic/tree/ETS) and why it’s better (hypothesis).
 
----
+Baseline: Predict “abandoned” for all carts below $20 value.
+
+Model: Logistic regression on features above. Hypothesis → captures interaction effects (e.g., large cart + long inactivity is highly abandoned).
 
 ### 5) Metrics, SLA, and Cost
 Metric(s): AUC-PR/MAE/etc. State why they fit harms/benefits.  
 SLA: p95 latency, max cost per 10k predictions.
 
----
+Metric: AUC-PR (abandonment is more frequent, so class imbalance).
+
+SLA: p95 latency < 100 ms; cost ≤ free tier under 100 requests/day.
 
 ### 6) API Sketch (if applicable)
 POST /predict request/response schema. Include example payloads.
