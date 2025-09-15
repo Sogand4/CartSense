@@ -22,25 +22,46 @@ Time since last activity.
 
 Device type (mobile/desktop).
 
+If site requires an account in order to purchase products ([High inidcator of cart abandonment](https://baymard.com/lists/cart-abandonment-rate))
+
 Referral source (direct / ad / search).
 
-Exclusions: payment status (leaks future), any info after checkout event.
+Exclusions: payment status (leaks future), any info after checkout event
 
 ### 4) Baseline → Model Plan
-Baseline you can implement immediately (rule/heuristic).  
-One simple model (e.g., logistic/tree/ETS) and why it’s better (hypothesis).
-
 Baseline: Predict “abandoned” for all carts below $20 value.
 
-Model: Logistic regression on features above. Hypothesis → captures interaction effects (e.g., large cart + long inactivity is highly abandoned).
+Model: Logistic regression
+
+- Binary classification
+- Each feature is assigned a weight -> simple and interpretable model to explain to stakeholders
+- Low latency inference (matrix multiply)
+- Easy to deploy
+- Captures interaction effects (e.g., large cart AND long inactivity may be more likely to be highly abandoned)
+
+Other models considered:
+
+- Decision trees: More flexible, but doesn't capture interactions as well, less interpretable, and may overfit on small data
+- Random forests Stronger, but heavier to train/serve and so is likely overkill for this project
+
+Hypothesis: Logistic regression will outperform the baseline by combining multiple weak predictors (cart value, item count, inactivity, device type) rather than relying on a single rule.
+Offline test: Run logistic regression on historical cart data and compare AUC-PR vs baseline score. Expect logistic regression to outperform baseline by leveraging multiple features instead of one threshold.
 
 ### 5) Metrics, SLA, and Cost
 Metric(s): AUC-PR/MAE/etc. State why they fit harms/benefits.  
 SLA: p95 latency, max cost per 10k predictions.
 
-Metric: AUC-PR (abandonment is more frequent, so class imbalance).
+Metric: AUC-PR ([abandonment is more frequent](https://www.statista.com/statistics/477804/online-shopping-cart-abandonment-rate-worldwide/), so class imbalance).
 
 SLA: p95 latency < 100 ms; cost ≤ free tier under 100 requests/day.
+
+- Logistic regression + precomputed features should keep the API relatively fast and meet this threshold
+- Measurement plan: Simulate 1,000 `/predict_cart` requests with synthetic clients, record response times, then compute p95 latency.
+
+Cost Envelope:
+
+- 100 req/day → within free tier (AWS Lambda + DynamoDB).
+- 50k req/hour spike → autoscaling serverless compute + caching, expected <$1 per 10k predictions.
 
 ### 6) API Sketch (if applicable)
 POST /predict request/response schema. Include example payloads.
