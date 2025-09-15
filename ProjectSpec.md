@@ -87,7 +87,6 @@ Multi-tenant note: Predictions are isolated per retailer; no retailer’s data i
 {
   "prediction": "abandoned",
   "probability": 0.78,
-  "model_version": "v1.0",
   "retailer_id": "store_12345"
 }
 ```
@@ -95,7 +94,6 @@ Multi-tenant note: Predictions are isolated per retailer; no retailer’s data i
 Notes: 
 - prediction is binary: "abandoned" or "purchased".
 - probability = model confidence (0.0–1.0).
-- model_version enables monitoring and rollback.
 - retailer_id ensures multi-tenant isolation (no cross-retailer leakage).
 
 **Endpoint:**  
@@ -144,9 +142,53 @@ Reciprocity: value returned and to whom.
 ---
 
 ### 8) Architecture Sketch (1 diagram)
-Major components and data flow. Note trade-offs and alternatives.
 
----
+![Architecture Diagram](image.png)
+
+**Architecture Diagram Code:**  
+```
+flowchart LR
+  A[Client: Retailer Checkout] -->|/predict_cart| B[API Gateway / Ingress]
+  B --> C[Compute: Lambda Predictor]
+  C --> D[(Feature Store: cart-level)]
+  C --> E[(Retailer Config Store: keyed by retailer_id)]
+  C --> G[(Observability: logs / metrics)]
+
+  subgraph Guardrails
+    H["k-anonymity ≥10 per retailer"]
+    I["Telemetry: aggregate only (no raw PII)"]
+    J["Retention: raw TTL ≤14d; aggregates ≤90d"]
+    K["Tenant Isolation: no cross-retailer leakage"]
+  end
+
+  G -. review .-> Guardrails
+```
+
+
+**Trade-offs & Alternatives**
+
+- **Serverless (Lambda)**  
+  - Good: Grows easily from a few requests to a big spike (cheap/free at small scale).  
+  - Bad: Can be slow at the very first request if the system is “cold.”  
+
+- **Containers (ECS/Kubernetes)**  
+  - Good: Always ready (no “cold start”), more control over how it runs.  
+  - Bad: More work to manage, more cost when traffic is low.  
+
+- **Hybrid**  
+  - Mix of both: mostly serverless, but keep a few containers “warm” for speed during spikes.  
+  - Cache retailer settings in memory for speed; go back to the database only if needed.  
+
+- **Feature Store**  
+  - Option 1: Calculate features (like inactivity time) right when the request comes in → simple, but adds a tiny bit of delay.  
+  - Option 2: Pre-calculate and store them → faster responses, but more moving parts and harder to keep up-to-date.  
+  - Chose option 1 for the ismpler design and since logistic regress is quick anyway
+
+- **Retailer Config**  
+  - Good: Stored once per retailer, easy to look up, no need to send the same info (like `requires_account`) every time.  
+  - Alternative: Put all retailer info in every `/predict_cart` call → simpler design, but wastes bandwidth and could get inconsistent.  
+ 
+
 
 ### 9) Risks & Mitigations
 Top 3 risks (technical/ethical) and how you will test or reduce them.
