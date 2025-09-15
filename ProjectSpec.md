@@ -47,7 +47,6 @@ Other models considered:
 Baseline and logistic regression are applied per-retailer, but trained to generalize across multiple stores. Guardrails ensure no leakage between tenants.
 
 Hypothesis: Logistic regression will outperform the baseline by combining multiple weak predictors (cart value, item count, inactivity, device type) rather than relying on a single rule.
-Offline test: Run logistic regression on historical cart data and compare AUC-PR vs baseline score. Expect logistic regression to outperform baseline by leveraging multiple features instead of one threshold.
 
 ### 5) Metrics, SLA, and Cost
 Metric(s): AUC-PR/MAE/etc. State why they fit harms/benefits.  
@@ -58,7 +57,6 @@ Metric: AUC-PR ([abandonment is more frequent](https://www.statista.com/statisti
 SLA: p95 latency < 100 ms; cost ≤ free tier under 100 requests/day.
 
 - Logistic regression + precomputed features should keep the API relatively fast and meet this threshold
-- Measurement plan: Simulate 1,000 `/predict_cart` requests with synthetic clients, record response times, then compute p95 latency.
 
 Cost Envelope:
 
@@ -156,10 +154,23 @@ Top 3 risks (technical/ethical) and how you will test or reduce them.
 ---
 
 ### 10) Measurement Plan
-One minimal experiment to validate the baseline vs model (offline acceptable).  
-How you will measure SLA (latency/cost).
 
----
+**Offline Model Evaluation**  
+
+- Run logistic regression on historical cart data and compare AUC-PR vs baseline score. Expect logistic regression to outperform baseline by leveraging multiple features instead of one threshold.
+
+**Latency SLA Test**  
+
+- Simulate 1,000 `/predict_cart` requests with synthetic clients, record response times, then compute p95 latency.
+
+**Cost SLA Test**  
+- Estimate costs under different loads:  
+  - **Normal load (100 req/day):** fits within AWS/GCP free tier quotas (Lambda + DynamoDB).  
+  - **Viral spike (50k req/hour):** autoscaling serverless compute with caching expected to keep costs ≤ $1 per 10k predictions.  
+
+**Multi-Tenant Isolation**  
+- Confirm that predictions are isolated per `retailer_id`.  
+- Run tests to ensure no data from one retailer can be accessed or inferred by another.
 
 ### 11) Evolution & Evidence
 Link a git hash (or range/tag) that shows the design’s evolution (commits, README updates, diagrams).  
