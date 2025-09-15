@@ -2,7 +2,7 @@
 
 ### 1) User & Decision
 
-User: E-commerce marketing/retention team.
+User: Marketing/retention teams across different e-commerce retailers (multi-tenant SaaS offering)
 
 Decision: Trigger a retention strategy (send reminder email, pop-up discount, etc.).
 
@@ -14,19 +14,19 @@ Horizon: Next 24 hours after last cart activity.
 
 ### 3) Features (No Leakage)
 
-Cart value (total $).
+- Cart value (total $).
+- Number of items.
+- Time since last activity.
+- Device type (mobile/desktop).
+- Shipping speed
 
-Number of items.
+Site level features:
 
-Time since last activity.
+- If site requires an account in order to purchase products ([High inidcator of cart abandonment](https://baymard.com/lists/cart-abandonment-rate)) - Binary flag (1=yes, 0=no)
+- Shipping speeds offered
+- Payment options available
 
-Device type (mobile/desktop).
-
-If site requires an account in order to purchase products ([High inidcator of cart abandonment](https://baymard.com/lists/cart-abandonment-rate))
-
-Referral source (direct / ad / search).
-
-Exclusions: payment status (leaks future), any info after checkout event
+Exclusions: payment status (leaks future), any info after checkout event, data from other retailers (each client only sees its own predictions)
 
 ### 4) Baseline → Model Plan
 Baseline: Predict “abandoned” for all carts below $20 value.
@@ -43,6 +43,8 @@ Other models considered:
 
 - Decision trees: More flexible, but doesn't capture interactions as well, less interpretable, and may overfit on small data
 - Random forests Stronger, but heavier to train/serve and so is likely overkill for this project
+
+Baseline and logistic regression are applied per-retailer, but trained to generalize across multiple stores. Guardrails ensure no leakage between tenants.
 
 Hypothesis: Logistic regression will outperform the baseline by combining multiple weak predictors (cart value, item count, inactivity, device type) rather than relying on a single rule.
 Offline test: Run logistic regression on historical cart data and compare AUC-PR vs baseline score. Expect logistic regression to outperform baseline by leveraging multiple features instead of one threshold.
@@ -63,10 +65,77 @@ Cost Envelope:
 - 100 req/day → within free tier (AWS Lambda + DynamoDB).
 - 50k req/hour spike → autoscaling serverless compute + caching, expected <$1 per 10k predictions.
 
-### 6) API Sketch (if applicable)
-POST /predict request/response schema. Include example payloads.
+Multi-tenant note: Predictions are isolated per retailer; no retailer’s data is exposed to others.
 
----
+### 6) API Sketch
+
+**Endpoint:**  
+`POST /predict_cart`
+
+**Request (JSON):**
+```json
+{
+  "retailer_id": "store_12345",
+  "cart_value": 45.99,
+  "item_count": 3,
+  "inactivity_hours": 12,
+  "device_type": "mobile",
+  "shipping_speed": "standard",
+}
+```
+
+**Response (JSON):**
+```json
+{
+  "prediction": "abandoned",
+  "probability": 0.78,
+  "model_version": "v1.0",
+  "retailer_id": "store_12345"
+}
+```
+
+Notes: 
+- prediction is binary: "abandoned" or "purchased".
+- probability = model confidence (0.0–1.0).
+- model_version enables monitoring and rollback.
+- retailer_id ensures multi-tenant isolation (no cross-retailer leakage).
+
+**Endpoint:**  
+`POST /retailer`
+```json
+{
+  "retailer_id": "store_12345",
+  "requires_account": true,
+  "payment_options": ["credit_card", "paypal"],
+  "shipping_speeds": ["standard", "express"]
+}
+```
+
+**Endpoint:**  
+`GET /retailer/{id}`
+```json
+{
+  "retailer_id": "store_12345",
+  "requires_account": true,
+  "payment_options": ["credit_card", "paypal"],
+  "shipping_speed": "standard",
+  "last_updated": "2025-09-14T10:45:00Z"
+}
+```
+
+**Endpoint:**  
+`PATCH /retailer/{id}`
+```json
+{
+  "requires_account": false
+}
+```
+
+Notes:
+
+- Retailer configs are managed separately (efficient, scalable).  
+- `/predict_cart` stays lightweight (cart-level only).
+- Features such as `requires_account` are site-level and constant per retailer, cached for efficiency.
 
 ### 7) Privacy, Ethics, Reciprocity (PIA excerpt)
 Data inventory, purpose limitation, retention, access (link your PIA).  
