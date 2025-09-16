@@ -12,3 +12,5 @@ Telemetry = the logs and metrics you collect.
 TTL = Time To Live (how long you keep data).
 
 Secure deletion = once data passes its allowed “time to live” (TTL), it is automatically removed in a way that can’t be recovered later.
+
+Jitter = adding small random noise to aggregated metrics so individual user behavior cannot be inferred from exact numbers.

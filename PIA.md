@@ -83,6 +83,15 @@ For each field: purpose, lawful basis (if applicable), minimization, retention, 
 Threats (abuse, scraping, doxxing) and mitigations (WAF, rate limits, jitter).  
 Secrets management and transport security.
 
+- Threats: scraping of predictions, overuse (denial of service), misuse of retailer IDs.  
+- Mitigations:  
+  - Authentication (API keys).  
+  - Tenant isolation enforced on every request.  
+  - Transport security: HTTPS.  
+  - Secrets stored in environment variables, not code.  
+  - Small jitter added to aggregate metrics to prevent inference attacks.
+
+
 ## 9. Compliance & Policy Alignment
 Policies (course policy, org policy, legal frameworks) and how you meet them.
 
