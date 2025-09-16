@@ -182,7 +182,7 @@ flowchart LR
 - **Feature Store**  
   - Option 1: Calculate features (like inactivity time) right when the request comes in → simple, but adds a tiny bit of delay.  
   - Option 2: Pre-calculate and store them → faster responses, but more moving parts and harder to keep up-to-date.  
-  - Chose option 1 for the ismpler design and since logistic regress is quick anyway
+  - Chose option 1 for the simpler design and since logistic regress is quick anyway
 
 - **Retailer Config**  
   - Good: Stored once per retailer, easy to look up, no need to send the same info (like `requires_account`) every time.  
@@ -191,9 +191,19 @@ flowchart LR
 
 
 ### 9) Risks & Mitigations
-Top 3 risks (technical/ethical) and how you will test or reduce them.
 
----
+**1. Misfire risk (false positives/negatives)**  
+- Risk: Model predicts “abandoned” when the cart would have been purchased (false positive), or misses true abandonments (false negative).  
+- Mitigation/Test: Evaluate precision and recall offline. Acceptance test = precision ≥ set threshold (e.g., 0.70) at chosen operating point.  
+
+**2. Tail latency risk**  
+- Risk: Most requests are fast, but a small % take too long (e.g., cold starts in serverless).  
+- Mitigation/Test: Run a load test with 1,000 synthetic requests, measure p95 latency. Acceptance test = p95 < 100 ms.  
+
+**3. Cost drift under viral spikes**  
+- Risk: Costs rise above budget when traffic jumps to 50k requests/hour.  
+- Mitigation/Test: Estimate costs with serverless pricing calculators; acceptance test = <$1 per 10k predictions at surge load.
+
 
 ### 10) Measurement Plan
 
