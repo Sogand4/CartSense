@@ -10,3 +10,5 @@ k‑anonymity: A dataset/aggregate is k‑anonymous if each released group has a
 Telemetry = the logs and metrics you collect.
 
 TTL = Time To Live (how long you keep data).
+
+Secure deletion = once data passes its allowed “time to live” (TTL), it is automatically removed in a way that can’t be recovered later.

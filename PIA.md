@@ -25,6 +25,7 @@ For each field: purpose, lawful basis (if applicable), minimization, retention, 
 - `item_count` → Purpose: model input; retention ≤14d raw.  
 - `inactivity_hours` → Purpose: model input; retention ≤14d raw.  
 - `device_type` (mobile/desktop) → Purpose: model input; retention ≤14d raw.  
+- `shipping_speed` (e.g., paypal/credit card) → Purpose: model input; retention ≤14d raw.  
 
 **Retailer-level config fields (stored in config store, not sent each time):**  
 - `requires_account` (boolean) → higher abandonment likelihood if true. Retained until updated/deleted by retailer.  
@@ -50,16 +51,33 @@ For each field: purpose, lawful basis (if applicable), minimization, retention, 
 - Protections: API schema limits fields; no PII accepted.
 
 ## 5. Minimization & Retention
-Aggregation/sampling strategies; bucketing/truncation; hashing/anonymization.  
-Raw TTL (days); aggregate retention; secure deletion plan.
+
+- Only collecting bare minimum data needed: 5 cart-level fields collected.  
+- No storage of sensitive raw data beyond TTL.  
+- Bucketing/truncation is not applied because no sensitive identifiers are collected, and raw data is retained for ≤14 days only.
+- **Raw logs:** ≤14 days.  
+- **Aggregates (abandonment rates per retailer):** ≤90 days.  
+- Secure deletion: logs are automatically replaced in rotation and database TTL policies handdle expiration of each record
 
 ## 6. Access Control & Governance
-Roles and least-privilege policies. Auditability of access.  
-Third parties involved (if any) and contracts.
+
+- Roles:  
+  - Retailer: access only to their predictions and aggregated metrics.  
+  - Developers: least-privilege, limited to monitoring system health.  
+- Audit logs track admin access.  
+- Hosted in AWS (Lambda for compute, DynamoDB/S3 for storage); no additional third-party processors
 
 ## 7. Transparency & Choice
-“What we collect & why” communication plan.  
-Opt-in/opt-out mechanisms where feasible.
+
+- **Cart-level features collected:** cart value, item count, inactivity time, device type, shipping speed
+  - *Why:* These are needed to estimate the likelihood a cart will be abandoned.  
+
+- **Retailer-level configs collected:** whether an account is required, shipping speeds offered, payment types offered  
+  - *Why:* These settings strongly affect abandonment behavior and are used as model inputs.
+
+- Retailers disclose in their privacy policy: “We use anonymous cart signals (e.g., cart value, item count, device type) and store settings (e.g., checkout requirements, shipping options) to improve checkout experience.”  
+- API provider publishes summary of what data is collected and why.  
+- **Choice:** End users may decline reminders or marketing nudges at the retailer level (opt-out handled by retailer).  
 
 ## 8. Security
 Threats (abuse, scraping, doxxing) and mitigations (WAF, rate limits, jitter).  
