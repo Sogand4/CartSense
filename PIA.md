@@ -36,12 +36,18 @@ For each field: purpose, lawful basis (if applicable), minimization, retention, 
 **Access roles:** Retailer has access only to their predictions/configs.    
 
 ## 3. Linkability & Identifiability
-Can events be linked across sessions/users? How? (e.g., referrer+time+token)  
-Quasi-identifiers present (IP, UA, location) and re-identification risks.
+
+- No direct user identifiers collected.  
+- Events cannot be linked across sessions.
+- Quasi-identifiers are not collected by API.  
+- Re-identification risk considered low.
 
 ## 4. Purpose Limitation & Secondary Use
-Declared purposes. Process to approve new purposes.  
-Protections against function creep.
+
+- Declared purpose: cart abandonment prediction.  
+- No secondary use allowed (e.g., advertising, resale).  
+- Any new purpose would require explicit re-approval and disclosure to retailers.  
+- Protections: API schema limits fields; no PII accepted.
 
 ## 5. Minimization & Retention
 Aggregation/sampling strategies; bucketing/truncation; hashing/anonymization.  
