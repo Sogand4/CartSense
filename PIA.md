@@ -93,11 +93,28 @@ Secrets management and transport security.
 
 
 ## 9. Compliance & Policy Alignment
-Policies (course policy, org policy, legal frameworks) and how you meet them.
+
+- **Course policy:** Design follows course guidelines — no personally identifiable information (PII) is collected; solution is scoped to free-tier cost assumptions under normal load.  
+- **Organizational policy:** Retailers are responsible for obtaining customer consent for reminders/marketing nudges. API provider processes only anonymous cart-level features and retailer configs.  
+- **Legal frameworks:** Aligned with GDPR/CPRA principles:  
+  - **Data minimization:** Only 5 cart-level fields collected (cart value, item count, inactivity, device type, shipping_speeds_offered).  
+  - **Purpose limitation:** Data is used solely for cart abandonment prediction, not advertising or profiling.  
+  - **Retention limits:** Raw logs TTL ≤14 days, aggregated metrics ≤90 days, enforced by database TTL policies.  
+- **Security compliance:** All transport over HTTPS; least-privilege access; secrets stored in environment variables.
 
 ## 10. Residual Risks & Trade-offs
-Top residual risks, business/ethical rationale, and contingency measures.
+
+- **False positives / customer annoyance:** Predictions may sometimes mark carts as abandoned when they would be purchased, leading to unnecessary reminders. *Trade-off:* Higher recall helps retailers recover more lost sales. *Mitigation:* Allow retailers to tune operating threshold.  
+- **Cold-start latency in serverless compute:** A small percentage of requests may exceed latency target due to Lambda warm-up. *Trade-off:* Serverless is cheaper and simpler at baseline scale. *Mitigation:* Pre-warming or hybrid container fallback could reduce this.  
+- **Perception of “surveillance”:** Even without PII, customers may feel tracked if reminders are too aggressive. *Trade-off:* Abandonment prediction adds retailer value. *Mitigation:* Reciprocity ensures value returned to customers (timely discounts, fewer irrelevant nudges); disclosure in retailer privacy policies.  
 
 ## 11. Sign-off
-Team members, date, version.  
-Attach your telemetry decision matrix and any diagrams that clarify data flows.
+- **Team member:** Sogand Haji-Salimi  
+- **Date:** 2025-09-14  
+- **Version:** v1.0  
+
+**Attachments:**  
+TODO
+- Telemetry Decision Matrix
+- Architecture diagram
+- Project spec
