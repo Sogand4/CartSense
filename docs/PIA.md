@@ -1,8 +1,6 @@
 # Privacy Impact Assessment (PIA)
 
 ## 1. Overview
-Project name, purpose, and scope.  
-Data processing summary (collection → processing → sharing → retention).
 
 **Project name:** CartSense - A Cart Abandonment Predictor  
 **Purpose:** Provide e-commerce retailers with a probability estimate that a customer’s cart will be abandoned, enabling timely interventions (e.g., reminder email, discount popup).  
@@ -16,32 +14,63 @@ Data processing summary (collection → processing → sharing → retention).
 - **Retention:** Raw logs ≤14 days; aggregated abandonment metrics ≤90 days.
 
 ## 2. Data Inventory
-Fields collected (raw and derived).  
-For each field: purpose, lawful basis (if applicable), minimization, retention, access roles.
 
-**Fields collected:**  
+**Identifiers (retailer_id, session/cart IDs):**
+- **Option A:** Store raw user/session/cart IDs → enables precise linking of carts over time but creates surveillance risk.  
+- **Option B:** Hash session/cart IDs with daily salt → allows session-level calibration while reducing linkability across days.  
+- **Option C (Selected):** Do not store session/cart IDs at all → prevents any cross-session tracking; rely on retailer_id only for tenant isolation.  
+**Rationale:** Chose Option C to eliminate re-identification risk entirely, sacrificing fine-grained session analysis.
+
+**Raw fields (per prediction request):** 
 - `retailer_id` → Tenant scoping; purpose: isolate predictions; retention ≤90d; access = system only.  
-- `cart_value` → Purpose: model input; minimization: numeric only, no product details; retention ≤14d raw.  
+- `cart_value` → Purpose: model input; minimization: numeric only (in CAD), no product details; retention ≤14d raw.  
 - `item_count` → Purpose: model input; retention ≤14d raw.  
 - `inactivity_hours` → Purpose: model input; retention ≤14d raw.  
 - `device_type` (mobile/desktop) → Purpose: model input; retention ≤14d raw.  
-- `shipping_speed` (e.g., paypal/credit card) → Purpose: model input; retention ≤14d raw.  
-
-**Retailer-level config fields (stored in config store, not sent each time):**  
+- `shipping_speed` (chosen option, e.g., paypal/credit card) → Purpose: model input; retention ≤14d raw. 
+- **Alternatives considered:**  
+  - Store full SKU/product lists → higher predictive power, but high risk (unique baskets could re-identify users).  
+  - Truncate to numeric summaries only (selected) → preserves predictive signal while minimizing invasiveness.  
+ 
+**Retailer-level config fields (stored in config store and not sent each time, updated explicitly by retailer):**
 - `requires_account` (boolean) → higher abandonment likelihood if true. Retained until updated/deleted by retailer.  
-- `shipping_speeds` (e.g., standard/express/overnight) → used as a signal in predictions. Retained until updated/deleted by retailer.  
-- `payment_options` (e.g., paypal/credit card) → used as a signal in predictions. Retained until updated/deleted by retailer.
+- `num_shipping_options` (int >= 0) → used as a signal in predictions. Retained until updated/deleted by retailer.  
+- `num_payment_options` (int >= 0) → used as a signal in predictions. Retained until updated/deleted by retailer.
+- **Alternatives considered:**  
+  - Store full lists of payment/shipping methods → leaks competitive intelligence and unnecessary detail.  
+  - Store only counts/booleans (selected) → reduces detail but captures abandonment risk signal.  
+
+**Derived / aggregate fields (for monitoring, not prediction):**
+- Aggregate abandonment rate per retailer (≤90d).
+- Prediction probability logs (for calibration) (≤14d).
+- Request count, latency, error rate (system health telemetry) (≤90d).
+- **Alternatives considered:**  
+  - Keep raw per-request logs indefinitely (high invasiveness).  
+  - Keep raw logs short-term + aggregate metrics long-term (selected).  
+**Rationale:** Balances calibration/ops needs with privacy (short TTLs, aggregation).  
+
+**Metadata automatically collected by infrastructure:**
+- Request timestamp (API Gateway, DB logs).
+- API key / authentication token (for rate limits).
+- Response time (Lambda logs).
+- Cloud provider access logs (ALB/CloudWatch).
+→ Retention follows default cloud log TTL unless restricted (≤14d raw, ≤90d aggregated).
+- **Alternatives considered:**  
+  - Retain indefinitely in CloudWatch (default).  
+  - Enforce TTL ≤14d raw, ≤90d aggregate (selected). 
 
 **Lawful basis:** Retailer collects data under their terms of service; API processes only aggregated/cart-level data.  
-**Minimization:** No PII (no names, emails, addresses).         
-**Access roles:** Retailer has access only to their predictions/configs.    
+**Minimization:** No PII collected (no names, emails, addresses, IPs, or session IDs).  
+**Access roles:** Retailers see only their predictions/configs; ops team sees aggregate metrics; no cross-retailer access.  
+**Could be derived:** From repeated cart values + inactivity, one could infer browsing session length or total spend trends (guarded via TTL + aggregation).  
+
 
 ## 3. Linkability & Identifiability
 
-- No direct user identifiers collected.  
-- Events cannot be linked across sessions.
-- Quasi-identifiers are not collected by API.  
-- Re-identification risk considered low.
+- **Option A:** Link carts across sessions using stable IDs → enables longitudinal profiling (surveillance risk).  
+- **Option B:** Hash IDs with salt → enables daily session analysis but still allows short-term profiling.  
+- **Option C (Selected):** Collect no user/session IDs → each prediction request is unlinkable across sessions.  
+**Rationale:** Eliminates linkage risk; limits analysis to cart-level only.
 
 ## 4. Purpose Limitation & Secondary Use
 
@@ -52,20 +81,30 @@ For each field: purpose, lawful basis (if applicable), minimization, retention, 
 
 ## 5. Minimization & Retention
 
-- Only collecting bare minimum data needed: 5 cart-level fields collected.  
-- No storage of sensitive raw data beyond TTL.  
-- Bucketing/truncation is not applied because no sensitive identifiers are collected, and raw data is retained for ≤14 days only.
-- **Raw logs:** ≤14 days.  
-- **Aggregates (abandonment rates per retailer):** ≤90 days.  
-- Secure deletion: logs are automatically replaced in rotation and database TTL policies handdle expiration of each record
+- **Cart features:** 6 minimal fields only. SKUs, user IDs, IPs explicitly excluded.  
+- **Retailer config:** Reduced to counts/booleans, not full option lists.  
+- **Logs:**  
+  - Raw logs (requests, probabilities) TTL ≤14d.  
+  - Aggregates (abandonment rate, latency) TTL ≤90d.  
+- **Alternatives considered:**  
+  - Indefinite log retention (higher ops convenience, high risk).  
+  - Bucketing/truncation (medium ops cost, reduces granularity).  
+  - Short TTLs (selected) → balances utility and privacy.  
+
+Secure deletion =  logs are automatically replaced in rotation and database TTL policies handle expiration of each record
 
 ## 6. Access Control & Governance
+
+- **Option A:** Developers have full DB access → risk of insider misuse.  
+- **Option B:** Role-based access control; retailers see their own metrics only; ops see only aggregate metrics (selected).  
+- **Rationale:** Preserves monitoring value while minimizing insider surveillance capability.  
 
 - Roles:  
   - Retailer: access only to their predictions and aggregated metrics.  
   - Developers: least-privilege, limited to monitoring system health.  
-- Audit logs track admin access.  
+- Audit logs track all admin access for extra security
 - Hosted in AWS (Lambda for compute, DynamoDB/S3 for storage); no additional third-party processors
+
 
 ## 7. Transparency & Choice
 
@@ -79,17 +118,34 @@ For each field: purpose, lawful basis (if applicable), minimization, retention, 
 - API provider publishes summary of what data is collected and why.  
 - **Choice:** End users may decline reminders or marketing nudges at the retailer level (opt-out handled by retailer).  
 
-## 8. Security
-Threats (abuse, scraping, doxxing) and mitigations (WAF, rate limits, jitter).  
-Secrets management and transport security.
+## 8. Security & Threat Modeling  
 
-- Threats: scraping of predictions, overuse (denial of service), misuse of retailer IDs.  
-- Mitigations:  
-  - Authentication (API keys).  
-  - Tenant isolation enforced on every request.  
-  - Transport security: HTTPS.  
-  - Secrets stored in environment variables, not code.  
-  - Small jitter added to aggregate metrics to prevent inference attacks.
+**Threat scenarios, surveillance capabilities, and mitigations:**  
+
+- **Linkage attacks:** Repeated cart values + inactivity + timestamps *could be linked across requests to profile a single user’s shopping behavior over time.*  
+  *Mitigation:* No user/session IDs collected; raw logs TTL ≤14d; aggregation prevents cross-session profiling.  
+
+- **Function creep:** Abandonment logs *could be reused to build advertising profiles or track customers beyond checkout.*  
+  *Mitigation:* API schema enforces cart-level fields only; secondary uses explicitly disallowed; any new purpose requires re-approval.  
+
+- **Third-party leakage:** Cloud logs (API Gateway, ALB, CloudWatch) *could expose request metadata to AWS operators or misconfigured IAM roles.*  
+  *Mitigation:* TTL ≤14d for raw logs; strict IAM policies; no external processors beyond AWS.  
+
+- **Insider threats:** Developers with broad DB access *could extract retailer-specific customer behavior and share it internally or externally.*  
+  *Mitigation:* Role-based access control; retailers see only their own metrics; ops team sees only aggregates; audit logs capture all admin access.  
+
+- **Retention risks:** “For debugging” logs kept indefinitely *would create a de facto surveillance archive of shopping behavior.*  
+  *Mitigation:* Automated log rotation + TTL policies; aggregates only retained ≤90d.  
+
+- **Abuse / scraping / denial of service:** Attackers *could query the API repeatedly to reverse-engineer model outputs or overwhelm resources.*  
+  *Mitigation:* Authentication (API keys), WAF + rate limiting, tenant isolation per request.  
+
+- **Inference attacks on aggregates:** Rare cart patterns *could let a retailer infer competitors’ customer behaviors.*  
+  *Mitigation:* Add small jitter/noise to aggregate metrics to reduce inference risk.  
+
+**Secrets & transport security:**  
+- API keys stored in environment variables, not code.  
+- All transport via HTTPS.  
 
 
 ## 9. Compliance & Policy Alignment
