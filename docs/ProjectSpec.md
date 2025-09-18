@@ -164,6 +164,7 @@ flowchart LR
   G -. review .-> Guardrails
 ```
 
+ADD AUTH???
 
 **Trade-offs & Alternatives**
 

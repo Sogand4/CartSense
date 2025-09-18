@@ -115,6 +115,6 @@ Secrets management and transport security.
 
 **Attachments:**  
 TODO
-- Telemetry Decision Matrix
+- [Telemetry Decision Matrix](./TelemetryDecisionMatrix.md)
 - Architecture diagram
 - Project spec
