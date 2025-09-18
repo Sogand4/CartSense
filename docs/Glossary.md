@@ -16,3 +16,7 @@ Secure deletion = once data passes its allowed “time to live” (TTL), it is a
 Jitter = adding small random noise to aggregated metrics so individual user behavior cannot be inferred from exact numbers.
 
 IAM (Identity and Access Management): A framework of policies and tools used to control who can access specific resources in a system and what actions they can perform.
+
+GDPR: General Data Protection Regulation — a European Union law that sets strict rules on how personal data is collected, stored, and used.
+
+CPRA: California Privacy Rights Act — a U.S. state law that expands consumer privacy rights and regulates how businesses handle personal data.

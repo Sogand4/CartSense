@@ -152,7 +152,7 @@ Secure deletion =  logs are automatically replaced in rotation and database TTL 
 
 - **Course policy:** Design follows course guidelines — no personally identifiable information (PII) is collected; solution is scoped to free-tier cost assumptions under normal load.  
 - **Organizational policy:** Retailers are responsible for obtaining customer consent for reminders/marketing nudges. API provider processes only anonymous cart-level features and retailer configs.  
-- **Legal frameworks:** Aligned with GDPR/CPRA principles:  
+- **Legal frameworks:** Aligned with PIPA (BC) & PIPEDA (Canada):
   - **Data minimization:** Only 5 cart-level fields collected (cart value, item count, inactivity, device type, shipping_speeds_offered).  
   - **Purpose limitation:** Data is used solely for cart abandonment prediction, not advertising or profiling.  
   - **Retention limits:** Raw logs TTL ≤14 days, aggregated metrics ≤90 days, enforced by database TTL policies.  
@@ -164,7 +164,16 @@ Secure deletion =  logs are automatically replaced in rotation and database TTL 
 - **Cold-start latency in serverless compute:** A small percentage of requests may exceed latency target due to Lambda warm-up. *Trade-off:* Serverless is cheaper and simpler at baseline scale. *Mitigation:* Pre-warming or hybrid container fallback could reduce this.  
 - **Perception of “surveillance”:** Even without PII, customers may feel tracked if reminders are too aggressive. *Trade-off:* Abandonment prediction adds retailer value. *Mitigation:* Reciprocity ensures value returned to customers (timely discounts, fewer irrelevant nudges); disclosure in retailer privacy policies.  
 
-## 11. Sign-off
+## 11. Data We Chose NOT to Collect  
+
+To meet functional requirements while minimizing surveillance risk, we explicitly rejected the following fields:  
+
+- **Full SKU / product lists:** Higher predictive power, but unique baskets could re-identify individual users.  
+- **Session/cart IDs:** Would enable longitudinal tracking of users; dropped to ensure unlinkability across sessions.  
+- **User IP / User Agent:** Available in infrastructure logs, but not used or stored; prevents device/browser fingerprinting.  
+- **Full lists of payment/shipping methods:** Reduced to counts/booleans only; avoids leaking competitive intelligence while still capturing abandonment risk signals.  
+
+## 12. Sign-off
 - **Team member:** Sogand Haji-Salimi  
 - **Date:** 2025-09-14  
 - **Version:** v1.0  
@@ -172,5 +181,6 @@ Secure deletion =  logs are automatically replaced in rotation and database TTL 
 **Attachments:**  
 TODO
 - [Telemetry Decision Matrix](./TelemetryDecisionMatrix.md)
+- [PrivacyStance](./PrivacyStance.md)
 - Architecture diagram
 - Project spec
