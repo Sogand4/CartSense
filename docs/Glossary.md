@@ -17,6 +17,6 @@ Jitter = adding small random noise to aggregated metrics so individual user beha
 
 IAM (Identity and Access Management): A framework of policies and tools used to control who can access specific resources in a system and what actions they can perform.
 
-GDPR: General Data Protection Regulation — a European Union law that sets strict rules on how personal data is collected, stored, and used.
+PIPA = Personal Information Protection Act, a law in British Columbia, Canada, that governs how private sector organizations (like businesses and non-profits) collect, use, and disclose personal information from individuals.
 
-CPRA: California Privacy Rights Act — a U.S. state law that expands consumer privacy rights and regulates how businesses handle personal data.
+PIPEDA: Personal Information Protection and Electronic Documents Act, is a Canadian federal privacy law that establishes rules for how private-sector organizations collect, use, and disclose personal information during commercial activities. 
