@@ -20,3 +20,6 @@ IAM (Identity and Access Management): A framework of policies and tools used to 
 PIPA = Personal Information Protection Act, a law in British Columbia, Canada, that governs how private sector organizations (like businesses and non-profits) collect, use, and disclose personal information from individuals.
 
 PIPEDA: Personal Information Protection and Electronic Documents Act, is a Canadian federal privacy law that establishes rules for how private-sector organizations collect, use, and disclose personal information during commercial activities. 
+
+Hashing: scrambling the ID into a coded string
+“Salt” = adding random noise to make it harder to reverse-engineer
