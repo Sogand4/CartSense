@@ -258,7 +258,7 @@ See [TelemetryDecisionMatrix.md](./TelemetryDecisionMatrix.md) for full table an
 
 ### 8) Architecture Sketch (1 diagram)
 
-![Architecture Diagram](Architecture.png)
+![Architecture Diagram](/CartSense/docs/Architecture.png)
 
 **Architecture Diagram Code:**  
 ```

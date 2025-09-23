@@ -179,8 +179,8 @@ To meet functional requirements while minimizing surveillance risk, we explicitl
 - **Version:** v1.0  
 
 **Attachments:**  
-TODO
+
 - [Telemetry Decision Matrix](./TelemetryDecisionMatrix.md)
 - [PrivacyStance](./PrivacyStance.md)
-- Architecture diagram
-- Project spec
+- [Architecture diagram](./ProjectSpec.md/#8-architecture-sketch-1-diagram)
+- [Project spec](./ProjectSpec.md)
