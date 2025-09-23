@@ -224,12 +224,38 @@ Idempotency: POST requests may include an Idempotency-Key header to ensure retri
 Tenant isolation: Predictions and configs are scoped by retailer_id; no cross-retailer leakage.
 
 ### 7) Privacy, Ethics, Reciprocity (PIA excerpt)
-Data inventory, purpose limitation, retention, access (link your PIA).  
-Telemetry decision matrix (value vs invasiveness vs effort).  
-Guardrails: k-anonymity, jitter/aggregation, opt-ins, disclosure.  
-Reciprocity: value returned and to whom.
 
----
+**Data inventory & purpose limitation**  
+
+We collect only 6 minimal cart-level fields (cart value, item count, inactivity hours, device type, shipping speed, retailer_id) plus 3 retailer-level config flags (requires_account, number of shipping/payment options).  
+- **Exclusions:** No names, emails, IPs, product SKUs, or session IDs (unlinkable by design).  
+- **Purpose limitation:** Data is used solely for cart abandonment prediction; no secondary use (e.g., advertising, resale).  
+- **Retention:** Raw logs ≤14 days; aggregate abandonment metrics ≤90 days.  
+- **Access:** Retailers see only their own predictions/configs; ops team sees only aggregated metrics.  
+See [PIA](./PIA.md) for full details.
+
+**Telemetry decision matrix**  
+
+We keep only high-value, low-invasiveness signals:  
+- Request counts, latency (p95), and error rate (for system health).  
+- Aggregate abandonment rates ≤90d, and short-term prediction probability logs ≤14d (for calibration).  
+Dropped: full cart contents, raw cart/session IDs, and system load metrics (either too invasive or low value).  
+See [TelemetryDecisionMatrix.md](./TelemetryDecisionMatrix.md) for full table and rationale.
+
+
+**Guardrails**  
+- **k-anonymity:** All aggregates checked for k ≥ 10 per retailer.  
+- **Noise/jitter:** Small random perturbations added to aggregate metrics to reduce inference risk.  
+- **TTL enforcement:** Raw request logs expire in ≤14 days, aggregates in ≤90 days.  
+- **Tenant isolation:** Strict schema ensures no cross-retailer leakage.  
+- **Access controls:** Role-based; audit logs track all developer/admin access.  
+- **Disclosure:** Retailers must state in their privacy policy that anonymous cart signals are used to improve checkout.
+
+**Reciprocity**  
+- **To retailers:** Actionable predictions to reduce lost sales, plus aggregate benchmarks of abandonment trends.  
+- **To customers:** Timely nudges (e.g., discounts, reminders) that reduce friction and improve checkout experience.  
+- **Balance:** Value returned mitigates perception of “surveillance”; aggressive use of reminders remains opt-out at retailer level.
+
 
 ### 8) Architecture Sketch (1 diagram)
 
