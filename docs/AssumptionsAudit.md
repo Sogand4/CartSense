@@ -27,9 +27,9 @@ Purpose: make your assumptions explicit, test them, and record how results chang
 - Session IDs: design-only PIA trade-off → only Option C meets privacy guardrails. **Future:** check calibration loss in pilot.  
 - Model choice: literature suggests ≤5% gap. **Future:** confirm empirically with random forest.
 - Cost: back-of-envelope math supports provisioned free tier. **Future:** rerun calculator with real traffic traces.  
-- **SLA latency:** No probe yet; design target = p95 < 100 ms at 100 RPS. Future: load test with 1k synthetic requests.  
-- **Privacy guardrails:** Schema inspection confirms no PII fields; future automated schema scan required.  
-- **No leakage assumption:** Feature timeline table verified; no T+ fields (e.g., payment status) included. Future: regression test when schema evolves.  
+- SLA latency: No probe yet; design target = p95 < 100 ms at 100 RPS. Future: load test with 1k synthetic requests.  
+- Privacy guardrails: Schema inspection confirms no PII fields; future automated schema scan required.  
+- No leakage assumption: Feature timeline table verified; no T+ fields (e.g., payment status) included. Future: regression test when schema evolves.  
 
 ---
 

@@ -1,10 +1,6 @@
 ## Cart Abandonment Predictor
 
 TODO: glossary + connect links
-- is it okay i changed to PIPA? does no where else in the specs mentio nthe other ones?
-- not keeping sessionId. so idk how to tell if my predictions were right?
-- PIA: pivacy covered from section 4 rubric?
-- TA feedback
 
 ### 1) User & Decision
 

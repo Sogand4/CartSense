@@ -70,4 +70,4 @@ Adopted serverless-first architecture with caching. Containers considered only a
 
 ## Attributions
 - **AI:** Generated trade-off options (session ID design, model selection, serverless vs container), suggested red-team perspectives, provided AWS calculator guidance, and surfaced literature sources.  
-- **Me:** Chose final design directions, validated assumptions with public benchmarks (Baymard, Caruana et al.), drafted PIA/insight memo, and structured evidence.  
+- **Me:** Chose final design directions, validated assumptions with public benchmarks (Baymard, Caruana et al.), drafted all files, and structured evidence.  
