@@ -291,6 +291,7 @@ F -. review .-> Guardrails
 - **Serverless (Lambda)**  
   - Good: Grows easily from a few requests to a big spike (cheap/free at small scale).  
   - Bad: Can be slow at the very first request if the system is “cold.”  
+  - Chose this option because it balances cost, elasticity, and simplicity
 
 - **Containers (ECS/Kubernetes)**  
   - Good: Always ready (no “cold start”), more control over how it runs.  
