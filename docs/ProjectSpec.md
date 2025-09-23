@@ -1,71 +1,99 @@
 ## Cart Abandonment Predictor
 
+TODO: glossary + connect links
+- is it okay i changed to PIPA? does no where else in the specs mentio nthe other ones?
+- not keeping sessionId. so idk how to tell if my predictions were right?
+- fix costs in cost section!
+- PIA: pivacy covered from section 4 rubric?
+- TA feedback
+
 ### 1) User & Decision
 
 User: Marketing/retention teams across different e-commerce retailers (multi-tenant SaaS offering)
 
-Decision: Trigger a retention strategy (send reminder email, pop-up discount, etc.).
+Decision: Trigger a retention strategy (send reminder email, offer discount, free shipping, etc.).
+
+*Insight:* By designing this as a multi-tenant SaaS, each retailer benefits from a shared model while tenant isolation ensures no cross-retailer data leakage.
 
 ### 2) Target & Horizon
 
-Target: Will this cart be purchased (1) or abandoned (0)?
+Target: Predict if this cart will be purchased (1) or abandoned (0)?
 
 Horizon: Next 24 hours after last cart activity.
 
 ### 3) Features (No Leakage)
 
+**Cart-level features:** 
 - Cart value (total $).
 - Number of items.
 - Time since last activity.
 - Device type (mobile/desktop).
 - Shipping speed
 
-Site level features:
+**Site-level features (cached per retailer):**  
+*Based on ([high inidcators of cart abandonment](https://baymard.com/lists/cart-abandonment-rate))*
+- Whether site requires an account in order to purchase products
+- Number of shipping options offered  
+- Number of payment options offered 
 
-- If site requires an account in order to purchase products ([High inidcator of cart abandonment](https://baymard.com/lists/cart-abandonment-rate)) - Binary flag (1=yes, 0=no)
-- Shipping speeds offered
-- Payment options available
+**Exclusions:**  
+- Payment status (leaks future)
+- Any information after checkout event  
+- Any cross-retailer data (so each client only sees its own predictions)
 
-Exclusions: payment status (leaks future), any info after checkout event, data from other retailers (each client only sees its own predictions)
+### 4) Baseline to Model Plan
 
-### 4) Baseline → Model Plan
 Baseline: Predict “abandoned” for all carts below $20 value.
-
 Model: Logistic regression
 
 - Binary classification
 - Each feature is assigned a weight -> simple and interpretable model to explain to stakeholders
 - Low latency inference (matrix multiply)
 - Easy to deploy
-- Captures interaction effects (e.g., large cart AND long inactivity may be more likely to be highly abandoned)
+- Captures interaction effects (e.g., large cart *and* long inactivity may be more likely to be highly abandoned)
 
 Other models considered:
 
 - Decision trees: More flexible, but doesn't capture interactions as well, less interpretable, and may overfit on small data
-- Random forests Stronger, but heavier to train/serve and so is likely overkill for this project
+- Random forests: Stronger, but heavier to train/serve and so is likely overkill for this project
 
 Baseline and logistic regression are applied per-retailer, but trained to generalize across multiple stores. Guardrails ensure no leakage between tenants.
 
 Hypothesis: Logistic regression will outperform the baseline by combining multiple weak predictors (cart value, item count, inactivity, device type) rather than relying on a single rule.
 
+See [measurement plan](./ProjectSpec.md/#10-measurement-plan) for more information
+
 ### 5) Metrics, SLA, and Cost
-Metric(s): AUC-PR/MAE/etc. State why they fit harms/benefits.  
-SLA: p95 latency, max cost per 10k predictions.
 
-Metric: AUC-PR ([abandonment is more frequent](https://www.statista.com/statistics/477804/online-shopping-cart-abandonment-rate-worldwide/), so class imbalance).
+**Metrics used:**  
+- AUC-PR: Better for our case because there is class imbalance ([abandonment is more frequent](https://www.statista.com/statistics/477804/online-shopping-cart-abandonment-rate-worldwide/)).  
+- Precision/recall at operating point: ensures quality of alerts to marketing teams.  
 
-SLA: p95 latency < 100 ms; cost ≤ free tier under 100 requests/day.
+**SLA:**  
+- Latency: p95 < 100 ms  
+- Cost: ≤ free tier under 100 requests/day  
+- See [measurement plan](./ProjectSpec.md/#10-measurement-plan) for more information  
 
-- Logistic regression + precomputed features should keep the API relatively fast and meet this threshold
+**Cost Envelope (AWS, with Free Tier)**  
 
-Cost Envelope:
+| Component        | Normal Load (100 req/day)                | Viral Spike (50k req/hour ≈ 36.5M/month)        | Notes |
+|------------------|-------------------------------------------|--------------------------------------------------|-------|
+| API Gateway      | ~73k req/month → **$0** (within 1M free)  | 36.5M req/month → **~$127**                     | Main cost driver at high traffic (billed per request after 1M) |
+| Lambda (compute) | ~7k ms/month → **$0** (within 400k GB-s free) | 36.5M req at 100 ms → **~$7.10**                | Cold start latency possible |
+| DynamoDB (no caching) | 25 RCUs/WCUs provisioned → **$0**       | Auto scales; **~$10–15/month** based on write/read pricing + unit counts | Free tier covers baseline; surge gives nontrivial DB cost without caching |
+| DynamoDB (with config caching) | 25 RCUs/WCUs provisioned → **$0** | **≈ $0–1/month** (only for cache misses / config refreshes) | Very small number of reads if configs are cached in memory or DAX |
+| Storage (logs)   | ≤25 GB free                              | ≤25 GB free                                      | TTL limits raw ≤14d, aggregates ≤90d; fits free tier unless verbose per-request logging |
+| **Total**        | **$0 (fits free tier)**                  | **~$140–150/month at surge (with caching reduces DB portion significantly)** | Surge cost ≈ $1 per 10k predictions; API Gateway remains the dominating cost |
 
-- 100 req/day → within free tier (AWS Lambda + DynamoDB).
-- 50k req/hour spike → autoscaling serverless compute + caching, expected <$1 per 10k predictions.
+**Design decision:**  
+While on-demand mode would better handle unpredictable traffic spikes, it is not covered by the DynamoDB free tier [source](https://aws.amazon.com/dynamodb/pricing/provisioned/) and costs scale per request. Therefore, we use provisioned capacity mode (25 RCUs/WCUs), which fits normal load within the free tier. With auto scaling enabled plus caching of static retailer configs, DynamoDB cost during spikes drops near zero, while API Gateway + Lambda remain primary cost drivers.
 
-Multi-tenant note: Predictions are isolated per retailer; no retailer’s data is exposed to others.
+
+With caching of retailer configs, reads drop to near zero because retailer configs are fetched once and reused in memory, keeping surge costs <$1. For writes, we avoid logging every request by only storing **aggregated abandonment metrics per retailer** with 90-day retention. This reduces DynamoDB write volume from millions of rows to a few thousand per month, keeping costs negligible (<$1).
 
 ### 6) API Sketch
+
+- TODO: add error example
 
 **Endpoint:**  
 `POST /predict_cart`
@@ -132,6 +160,12 @@ Notes:
 - Retailer configs are managed separately (efficient, scalable).  
 - `/predict_cart` stays lightweight (cart-level only).
 - Features such as `requires_account` are site-level and constant per retailer, cached for efficiency.
+
+Endpoints table: method + path + one‑line purpose + auth?
+Request/response examples: one JSON per key endpoint (happy path).
+Status codes: list the main codes + one example error shape.
+Auth scheme: where the token goes (e.g., Authorization: Bearer …), even if stubbed for P1.
+Notes: versioning (e.g., /v1), rate limits (e.g., 60 req/min), idempotency key if relevant.
 
 ### 7) Privacy, Ethics, Reciprocity (PIA excerpt)
 Data inventory, purpose limitation, retention, access (link your PIA).  
@@ -209,6 +243,8 @@ ADD AUTH???
 ### 10) Measurement Plan
 
 **Offline Model Evaluation**  
+
+TODO: check FAQ. is this evaluation plan?
 
 - Run logistic regression on historical cart data and compare AUC-PR vs baseline score. Expect logistic regression to outperform baseline by leveraging multiple features instead of one threshold.
 

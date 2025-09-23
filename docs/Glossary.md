@@ -23,3 +23,7 @@ PIPEDA: Personal Information Protection and Electronic Documents Act, is a Canad
 
 Hashing: scrambling the ID into a coded string
 “Salt” = adding random noise to make it harder to reverse-engineer
+
+(25 RCUs/WCUs)
+
+cold start
