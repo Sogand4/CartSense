@@ -1,7 +1,5 @@
 ## Cart Abandonment Predictor
 
-TODO: glossary + connect links
-
 ### 1) User & Decision
 
 User: Marketing/retention teams across different e-commerce retailers (multi-tenant SaaS offering)
@@ -61,7 +59,7 @@ See [measurement plan](./ProjectSpec.md/#10-measurement-plan) for more informati
 ### 5) Metrics, SLA, and Cost
 
 **Metrics used:**  
-- AUC-PR: Better for our case because there is class imbalance ([abandonment is more frequent](https://www.statista.com/statistics/477804/online-shopping-cart-abandonment-rate-worldwide/)).  
+- [AUC-PR](./Glossary.md): Better for our case because there is class imbalance ([abandonment is more frequent](https://www.statista.com/statistics/477804/online-shopping-cart-abandonment-rate-worldwide/)).  
 - Precision/recall at operating point: ensures quality of alerts to marketing teams.  
 
 **SLA:**  
@@ -74,10 +72,10 @@ See [measurement plan](./ProjectSpec.md/#10-measurement-plan) for more informati
 | Component        | Normal Load (100 req/day)                | Viral Spike (50k req/hour ≈ 36.5M/month)        | Notes |
 |------------------|-------------------------------------------|--------------------------------------------------|-------|
 | API Gateway      | ~73k req/month → **$0** (within 1M free)  | 36.5M req/month → **~$127**                     | Main cost driver at high traffic (billed per request after 1M) |
-| Lambda (compute) | ~7k ms/month → **$0** (within 400k GB-s free) | 36.5M req at 100 ms → **~$7.10**                | Cold start latency possible |
-| DynamoDB (no caching) | 25 RCUs/WCUs provisioned → **$0**       | Auto scales; **~$10–15/month** based on write/read pricing + unit counts | Free tier covers baseline; surge gives nontrivial DB cost without caching |
+| Lambda (compute) | ~7k ms/month → **$0** (within 400k GB-s free) | 36.5M req at 100 ms → **~$7.10**                | [Cold start](./Glossary.md) latency possible |
+| DynamoDB (no caching) | 25 [RCUs](./Glossary.md)/[WCUs](./Glossary.md) provisioned → **$0**       | Auto scales; **~$10–15/month** based on write/read pricing + unit counts | Free tier covers baseline; surge gives nontrivial DB cost without caching |
 | DynamoDB (with config caching) | 25 RCUs/WCUs provisioned → **$0** | **≈ $0–1/month** (only for cache misses / config refreshes) | Very small number of reads if configs are cached in memory or DAX |
-| Storage (logs)   | ≤25 GB free                              | ≤25 GB free                                      | TTL limits raw ≤14d, aggregates ≤90d; fits free tier unless verbose per-request logging |
+| Storage (logs)   | ≤25 GB free                              | ≤25 GB free                                      | [TTL](./Glossary.md) limits raw ≤14d, aggregates ≤90d; fits free tier unless verbose per-request logging |
 | **Total**        | **$0 (fits free tier)**                  | **~$140–150/month at surge (with caching reduces DB portion significantly)** | Surge cost ≈ $1 per 10k predictions; API Gateway remains the dominating cost |
 
 **Design decision:**  
@@ -223,13 +221,13 @@ Tenant isolation: Predictions and configs are scoped by retailer_id; no cross-re
 **Data inventory & purpose limitation**  
 
 We collect only 6 minimal cart-level fields (cart value, item count, inactivity hours, device type, shipping speed, retailer_id) plus 3 retailer-level config flags (requires_account, number of shipping/payment options).  
-- **Exclusions:** No names, emails, IPs, product SKUs, or session IDs (unlinkable by design).  
+- **Exclusions:** No names, emails, IPs, product [SKUs](./Glossary.md), or session IDs (unlinkable by design).  
 - **Purpose limitation:** Data is used solely for cart abandonment prediction; no secondary use (e.g., advertising, resale).  
 - **Retention:** Raw logs ≤14 days; aggregate abandonment metrics ≤90 days.  
 - **Access:** Retailers see only their own predictions/configs; ops team sees only aggregated metrics.  
 See [PIA](./PIA.md) for full details.
 
-**Telemetry decision matrix**  
+**[Telemetry](./Glossary.md) decision matrix**  
 
 We keep only high-value, low-invasiveness signals:  
 - Request counts, latency (p95), and error rate (for system health).  
@@ -239,8 +237,8 @@ See [TelemetryDecisionMatrix.md](./TelemetryDecisionMatrix.md) for full table an
 
 
 **Guardrails**  
-- **k-anonymity:** All aggregates checked for k ≥ 10 per retailer.  
-- **Noise/jitter:** Small random perturbations added to aggregate metrics to reduce inference risk.  
+- **[k-anonymity](./Glossary.md):** All aggregates checked for k ≥ 10 per retailer.  
+- **Noise/[jitter](./Glossary.md):** Small random perturbations added to aggregate metrics to reduce inference risk.  
 - **TTL enforcement:** Raw request logs expire in ≤14 days, aggregates in ≤90 days.  
 - **Tenant isolation:** Strict schema ensures no cross-retailer leakage.  
 - **Access controls:** Role-based; audit logs track all developer/admin access.  
@@ -280,6 +278,8 @@ end
 G -. review .-> Guardrails
 F -. review .-> Guardrails
 ```
+Notes:  
+[PII](./Glossary.md) = Personally Identifiable Information  
 
 **Trade-offs & Alternatives**
 

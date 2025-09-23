@@ -1,29 +1,29 @@
-PII - Personally Identifiable Infomormation
+PII (Personally Identifiable Information): Any data that can directly identify a person (e.g., name, email, phone).
 
-**SKU (Stock Keeping Unit):**  
-A unique identifier assigned by retailers for each distinct product variation
+SKU (Stock Keeping Unit): A retailer’s unique code for a product or variation.
 
-AUC‑PR (Area Under the Precision‑Recall Curve): Performance metric for imbalanced binary classification
+AUC-PR (Area Under the Precision-Recall Curve): Metric showing how well a model performs on imbalanced data (good for rare events).
 
-k‑anonymity: A dataset/aggregate is k‑anonymous if each released group has at least k members (reduces re‑identification)
+k-anonymity: Privacy property: each data group has at least k people, so no one stands out.
 
-Telemetry = the logs and metrics you collect.
+Telemetry: System-collected logs and metrics (e.g., requests, errors, latency).
 
-TTL = Time To Live (how long you keep data).
+TTL (Time To Live): How long data is stored before it’s auto-deleted.
 
-Secure deletion = once data passes its allowed “time to live” (TTL), it is automatically removed in a way that can’t be recovered later.
+Secure deletion: Ensuring expired data is erased and unrecoverable.
 
-Jitter = adding small random noise to aggregated metrics so individual user behavior cannot be inferred from exact numbers.
+Jitter: Adding small random noise to numbers to hide exact user behavior.
 
-IAM (Identity and Access Management): A framework of policies and tools used to control who can access specific resources in a system and what actions they can perform.
+IAM (Identity and Access Management): Rules and tools that control who can access what in a system.
 
-PIPA = Personal Information Protection Act, a law in British Columbia, Canada, that governs how private sector organizations (like businesses and non-profits) collect, use, and disclose personal information from individuals.
+PIPA: BC law for how businesses use personal info.
 
-PIPEDA: Personal Information Protection and Electronic Documents Act, is a Canadian federal privacy law that establishes rules for how private-sector organizations collect, use, and disclose personal information during commercial activities. 
+PIPEDA: Canadian federal law for how businesses use personal info in commercial activities.
 
-Hashing: scrambling the ID into a coded string
-“Salt” = adding random noise to make it harder to reverse-engineer
+Salt: Extra random value added to the hash to prevent reverse-engineering.
 
-(25 RCUs/WCUs)
+RCU (Read Capacity Unit): DynamoDB measure of how many reads per second your table can handle.
 
-cold start
+WCU (Write Capacity Unit): DynamoDB measure of how many writes per second your table can handle
+
+Cold start: Extra delay when a serverless function (like AWS Lambda) runs after being idle.

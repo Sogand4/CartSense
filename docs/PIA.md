@@ -17,7 +17,7 @@
 
 **Identifiers (retailer_id, session/cart IDs):**
 - **Option A:** Store raw user/session/cart IDs → enables precise linking of carts over time but creates surveillance risk.  
-- **Option B:** Hash session/cart IDs with daily salt → allows session-level calibration while reducing linkability across days.  
+- **Option B:** Hash session/cart IDs with daily [salt](./Glossary.md) → allows session-level calibration while reducing linkability across days.  
 - **Option C (Selected):** Do not store session/cart IDs at all → prevents any cross-session tracking; rely on retailer_id only for tenant isolation.  
 **Rationale:** Chose Option C to eliminate re-identification risk entirely, sacrificing fine-grained session analysis.
 
@@ -91,7 +91,8 @@
   - Bucketing/truncation (medium ops cost, reduces granularity).  
   - Short TTLs (selected) → balances utility and privacy.  
 
-Secure deletion =  logs are automatically replaced in rotation and database TTL policies handle expiration of each record
+[Secure deletion](./Glossary.md):  
+Logs are automatically replaced in rotation and database TTL policies handle expiration of each record
 
 ## 6. Access Control & Governance
 
@@ -128,7 +129,7 @@ Secure deletion =  logs are automatically replaced in rotation and database TTL 
 - **Function creep:** Abandonment logs *could be reused to build advertising profiles or track customers beyond checkout.*  
   *Mitigation:* API schema enforces cart-level fields only; secondary uses explicitly disallowed; any new purpose requires re-approval.  
 
-- **Third-party leakage:** Cloud logs (API Gateway, ALB, CloudWatch) *could expose request metadata to AWS operators or misconfigured IAM roles.*  
+- **Third-party leakage:** Cloud logs (API Gateway, ALB, CloudWatch) *could expose request metadata to AWS operators or misconfigured [IAM](./Glossary.md) roles.*  
   *Mitigation:* TTL ≤14d for raw logs; strict IAM policies; no external processors beyond AWS.  
 
 - **Insider threats:** Developers with broad DB access *could extract retailer-specific customer behavior and share it internally or externally.*  
@@ -152,7 +153,7 @@ Secure deletion =  logs are automatically replaced in rotation and database TTL 
 
 - **Course policy:** Design follows course guidelines — no personally identifiable information (PII) is collected; solution is scoped to free-tier cost assumptions under normal load.  
 - **Organizational policy:** Retailers are responsible for obtaining customer consent for reminders/marketing nudges. API provider processes only anonymous cart-level features and retailer configs.  
-- **Legal frameworks:** Aligned with PIPA (BC) & PIPEDA (Canada):
+- **Legal frameworks:** Aligned with [PIPA](./Glossary.md) (BC) & [PIPEDA](./Glossary.md) (Canada):
   - **Data minimization:** Only 5 cart-level fields collected (cart value, item count, inactivity, device type, shipping_speeds_offered).  
   - **Purpose limitation:** Data is used solely for cart abandonment prediction, not advertising or profiling.  
   - **Retention limits:** Raw logs TTL ≤14 days, aggregated metrics ≤90 days, enforced by database TTL policies.  
