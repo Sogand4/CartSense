@@ -361,7 +361,7 @@ Notes:
 - **Acceptance test:** Cross-retailer access is blocked (403 Unauthorized).  
 
 ### 11) Evolution & Evidence
-Link a git hash (or range/tag) that shows the design’s evolution (commits, README updates, diagrams). 
+Commit hash for grading: <see submission comments>
 
 [Insight memo](./InsightMemo.md)  
 [Assumption Audit](./AssumptionsAudit.md)   
