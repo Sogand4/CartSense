@@ -93,8 +93,20 @@ With caching of retailer configs, reads drop to near zero because retailer confi
 
 ### 6) API Sketch
 
-- TODO: add error example
+#### Endpoints Table
 
+| Method | Path                | Purpose                                | Auth Required |
+|--------|---------------------|----------------------------------------|---------------|
+| POST   | `/v1/predict_cart`  | Return abandonment prediction for cart | Bearer token  |
+| POST   | `/v1/retailer`      | Create retailer configuration          | Bearer token  |
+| GET    | `/v1/retailer/{id}` | Retrieve retailer configuration        | Bearer token  |
+| PATCH  | `/v1/retailer/{id}` | Update retailer configuration          | Bearer token  |
+
+---
+
+#### Request/Response Examples
+
+**Predict Cart**
 **Endpoint:**  
 `POST /predict_cart`
 
@@ -119,35 +131,53 @@ With caching of retailer configs, reads drop to near zero because retailer confi
 }
 ```
 
-Notes: 
-- prediction is binary: "abandoned" or "purchased".
-- probability = model confidence (0.0–1.0).
-- retailer_id ensures multi-tenant isolation (no cross-retailer leakage).
+**Retailer Config**
 
-**Endpoint:**  
+**Request:**  
 `POST /retailer`
 ```json
 {
   "retailer_id": "store_12345",
   "requires_account": true,
-  "payment_options": ["credit_card", "paypal"],
-  "shipping_speeds": ["standard", "express"]
+  "payment_options": 2,
+  "shipping_speeds": 2
 }
 ```
 
-**Endpoint:**  
+**Response:**  
+`POST /retailer`
+```json
+{
+  "retailer_id": "store_12345",
+  "requires_account": true,
+  "payment_options": 2,
+  "shipping_speeds": 2,
+  "last_updated": "2025-09-14T10:45:00Z"
+}
+```
+
+**Get Retailer Config**
+
+**Request**
+`GET /retailer/{id}`
+```json
+GET /v1/retailer/store_12345
+Authorization: Bearer <token>
+```
+
+**Response:**  
 `GET /retailer/{id}`
 ```json
 {
   "retailer_id": "store_12345",
   "requires_account": true,
-  "payment_options": ["credit_card", "paypal"],
-  "shipping_speed": "standard",
+  "payment_options": 2,
+  "shipping_speeds": 2,
   "last_updated": "2025-09-14T10:45:00Z"
 }
 ```
 
-**Endpoint:**  
+**Update Retailer Config**  
 `PATCH /retailer/{id}`
 ```json
 {
@@ -155,17 +185,43 @@ Notes:
 }
 ```
 
-Notes:
+**Response:**  
+`PATCH /retailer/{id}`
+```json
+{
+  "retailer_id": "store_12345",
+  "requires_account": false,
+  "payment_options": 2,
+  "shipping_speeds": 2,
+  "last_updated": "2025-09-15T09:30:00Z"
+}
+```
 
-- Retailer configs are managed separately (efficient, scalable).  
-- `/predict_cart` stays lightweight (cart-level only).
-- Features such as `requires_account` are site-level and constant per retailer, cached for efficiency.
+## Error Example 
+**Response (JSON):**
+```json
+{
+  "error": "Invalid request",
+  "message": "Missing required field: retailer_id",
+  "status": 400
+}
+```
 
-Endpoints table: method + path + one‑line purpose + auth?
-Request/response examples: one JSON per key endpoint (happy path).
-Status codes: list the main codes + one example error shape.
-Auth scheme: where the token goes (e.g., Authorization: Bearer …), even if stubbed for P1.
-Notes: versioning (e.g., /v1), rate limits (e.g., 60 req/min), idempotency key if relevant.
+Status Codes
+
+- 200 OK – successful GET/POST/PATCH
+- 201 Created – retailer config successfully created
+- 400 Bad Request – invalid/missing input
+- 401 Unauthorized – missing or invalid token
+- 404 Not Found – retailer ID does not exist
+- 500 Internal Server Error – unexpected failure
+
+Notes
+
+Versioning: All endpoints are prefixed with /v1/.
+Rate limits: 60 requests/minute per retailer.
+Idempotency: POST requests may include an Idempotency-Key header to ensure retries are safe.
+Tenant isolation: Predictions and configs are scoped by retailer_id; no cross-retailer leakage.
 
 ### 7) Privacy, Ethics, Reciprocity (PIA excerpt)
 Data inventory, purpose limitation, retention, access (link your PIA).  
