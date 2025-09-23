@@ -315,17 +315,34 @@ F -. review .-> Guardrails
 ### 9) Risks & Mitigations
 
 **1. Misfire risk (false positives/negatives)**  
-- Risk: Model predicts “abandoned” when the cart would have been purchased (false positive), or misses true abandonments (false negative).  
-- Mitigation/Test: Evaluate precision and recall offline. Acceptance test = precision ≥ set threshold (e.g., 0.70) at chosen operating point.  
+- **Risk:** Model predicts “abandoned” when the cart would have been purchased (false positive), or misses true abandonments (false negative).  
+- **Mitigation/Test:** Evaluate precision and recall offline.  
+- **Acceptance test:** Precision ≥ 0.70 at chosen operating point.  
 
 **2. Tail latency risk**  
-- Risk: Most requests are fast, but a small % take too long (e.g., cold starts in serverless).  
-- Mitigation/Test: Run a load test with 1,000 synthetic requests, measure p95 latency. Acceptance test = p95 < 100 ms.  
+- **Risk:** Most requests are fast, but a small % take too long (e.g., cold starts in serverless).  
+- **Mitigation/Test:** Run a load test with 1,000 synthetic requests, measure p95 latency.  
+- **Acceptance test:** p95 < 100 ms.  
 
 **3. Cost drift under viral spikes**  
-- Risk: Costs rise above budget when traffic jumps to 50k requests/hour.  
-- Mitigation/Test: Estimate costs with serverless pricing calculators; acceptance test = <$1 per 10k predictions at surge load.
+- **Risk:** Costs rise above budget when traffic jumps to 50k requests/hour.  
+- **Mitigation/Test:** Estimate costs with serverless pricing calculators.  
+- **Acceptance test:** <$1 per 10k predictions at surge load.  
 
+**4. Privacy & ethics risk**  
+- **Risk:** Retailers could misuse predictions (e.g., aggressive reminders) leading to perceived surveillance, even without PII.  
+- **Mitigation/Test:** Guardrails in PIA (no PII, TTL ≤14d raw, k-anonymity for aggregates, transparency in policies).  
+- **Acceptance test:** Schema scan shows no disallowed fields; all aggregates meet k ≥ 10.  
+
+**5. Multi-tenant isolation risk**  
+- **Risk:** One retailer accidentally accesses another retailer’s predictions or metrics.  
+- **Mitigation/Test:** Tenant scoping by `retailer_id`, strict auth checks, isolation tests.  
+- **Acceptance test:** Unit/integration tests verify no cross-tenant data returned; access logs confirm isolation.  
+
+**6. Model drift risk**  
+- **Risk:** Customer behavior changes over time, degrading prediction accuracy.  
+- **Mitigation/Test:** Monitor aggregate abandonment rates vs. predicted probabilities; retrain periodically.  
+- **Acceptance test:** Calibration error (e.g., Brier score) ≤ 0.2.
 
 ### 10) Measurement Plan
 
@@ -349,5 +366,8 @@ TODO: check FAQ. is this evaluation plan?
 - Run tests to ensure no data from one retailer can be accessed or inferred by another.
 
 ### 11) Evolution & Evidence
-Link a git hash (or range/tag) that shows the design’s evolution (commits, README updates, diagrams).  
-Insight memo link (3 insights), assumption audit, and Socratic log references.
+Link a git hash (or range/tag) that shows the design’s evolution (commits, README updates, diagrams). 
+
+[Insight memo](./InsightMemo.md)
+[Assumption Audio](./AssumptionsAudit.md)
+[Socratic Log References](./AiSocraticLog.md)
