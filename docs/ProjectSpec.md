@@ -3,7 +3,6 @@
 TODO: glossary + connect links
 - is it okay i changed to PIPA? does no where else in the specs mentio nthe other ones?
 - not keeping sessionId. so idk how to tell if my predictions were right?
-- fix costs in cost section!
 - PIA: pivacy covered from section 4 rubric?
 - TA feedback
 
@@ -341,33 +340,33 @@ F -. review .-> Guardrails
 
 **6. Model drift risk**  
 - **Risk:** Customer behavior changes over time, degrading prediction accuracy.  
-- **Mitigation/Test:** Monitor aggregate abandonment rates vs. predicted probabilities; retrain periodically.  
-- **Acceptance test:** Calibration error (e.g., Brier score) ≤ 0.2.
+- **Mitigation/Test:** Monitor aggregate abandonment rates vs. predicted probabilities; retrain periodically. 
+- **Acceptance test:** Predicted probabilities remain aligned with observed abandonment rates within an acceptable tolerance.  
 
 ### 10) Measurement Plan
 
 **Offline Model Evaluation**  
-
-TODO: check FAQ. is this evaluation plan?
-
-- Run logistic regression on historical cart data and compare AUC-PR vs baseline score. Expect logistic regression to outperform baseline by leveraging multiple features instead of one threshold.
+- Run logistic regression on historical cart data and compare AUC-PR vs baseline (always predict “abandoned” if cart < $20).  
+- **Acceptance test:** Logistic regression achieves higher AUC-PR than baseline by combining multiple features.  
 
 **Latency SLA Test**  
-
-- Simulate 1,000 `/predict_cart` requests with synthetic clients, record response times, then compute p95 latency.
+- Simulate 1,000 `/predict_cart` requests with synthetic clients, record response times, then compute p95 latency.  
+- **Acceptance test:** p95 latency < 100 ms.  
 
 **Cost SLA Test**  
-- Estimate costs under different loads:  
-  - **Normal load (100 req/day):** fits within AWS/GCP free tier quotas (Lambda + DynamoDB).  
+- Estimate costs under different loads using AWS pricing calculator:  
+  - **Normal load (100 req/day):** must fit within AWS free tier quotas (Lambda + DynamoDB).  
   - **Viral spike (50k req/hour):** autoscaling serverless compute with caching expected to keep costs ≤ $1 per 10k predictions.  
+- **Acceptance test:** Costs remain within free tier at normal load; ≤ $1 per 10k predictions at surge load.  
 
 **Multi-Tenant Isolation**  
-- Confirm that predictions are isolated per `retailer_id`.  
-- Run tests to ensure no data from one retailer can be accessed or inferred by another.
+- Confirm predictions are isolated per `retailer_id`.  
+- Test: request predictions using another retailer’s token or ID.  
+- **Acceptance test:** Cross-retailer access is blocked (403 Unauthorized).  
 
 ### 11) Evolution & Evidence
 Link a git hash (or range/tag) that shows the design’s evolution (commits, README updates, diagrams). 
 
-[Insight memo](./InsightMemo.md)
-[Assumption Audio](./AssumptionsAudit.md)
-[Socratic Log References](./AiSocraticLog.md)
+[Insight memo](./InsightMemo.md)  
+[Assumption Audit](./AssumptionsAudit.md)   
+[Socratic Log References](./AiSocraticLog.md) 
