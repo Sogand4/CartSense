@@ -259,28 +259,32 @@ See [TelemetryDecisionMatrix.md](./TelemetryDecisionMatrix.md) for full table an
 
 ### 8) Architecture Sketch (1 diagram)
 
-![Architecture Diagram](image.png)
+![Architecture Diagram](Architecture.png)
 
 **Architecture Diagram Code:**  
 ```
 flowchart LR
-  A[Client: Retailer Checkout] -->|/predict_cart| B[API Gateway / Ingress]
-  B --> C[Compute: Lambda Predictor]
-  C --> D[(Feature Store: cart-level)]
-  C --> E[(Retailer Config Store: keyed by retailer_id)]
-  C --> G[(Observability: logs / metrics)]
+A[Client: Retailer Checkout] -->|/predict_cart| B[API Gateway / Ingress]
+B --> C[Compute: Lambda Predictor]
 
-  subgraph Guardrails
-    H["k-anonymity ≥10 per retailer"]
-    I["Telemetry: aggregate only (no raw PII)"]
-    J["Retention: raw TTL ≤14d; aggregates ≤90d"]
-    K["Tenant Isolation: no cross-retailer leakage"]
-  end
+C --> D[(On-the-fly Feature Computation: inactivity, cart value, etc.)]
 
-  G -. review .-> Guardrails
+C --> E[(DynamoDB: Retailer Config Store, provisioned mode + autoscaling)]
+E -. cache .-> C
+
+C --> F[(DynamoDB: Aggregated Metrics ≤90d)]
+C --> G[(Observability: logs / metrics ≤14d raw)]
+
+subgraph Guardrails
+H["Auth: Bearer token (API Gateway)"]
+I["Tenant Isolation: retailer_id scope"]
+J["Retention: raw ≤14d; aggregates ≤90d"]
+K["Privacy: no PII, k-anonymity ≥10"]
+end
+
+G -. review .-> Guardrails
+F -. review .-> Guardrails
 ```
-
-ADD AUTH???
 
 **Trade-offs & Alternatives**
 
